@@ -4,6 +4,13 @@ import {
   countNews,
   topNewsService,
   findByIdService,
+  searchByTitleService,
+  byUserService,
+  updateService,
+  eraseService,
+  likeNewsService,
+  deleteLikeNewsService,
+  addCommentService,
 } from "../services/news.service.js";
 
 export const create = async (req, res) => {
@@ -117,6 +124,154 @@ export const findById = async (req, res) => {
     const { id } = req.params;
 
     const news = await findByIdService(id);
+
+    return res.send({
+      news: {
+        id: news._id,
+        title: news.title,
+        text: news.text,
+        banner: news.banner,
+        likes: news.likes,
+        comments: news.comments,
+        name: news.user.name,
+        username: news.user.username,
+        userAvatar: news.user.avatar,
+      },
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+export const searchByTitle = async (req, res) => {
+  try {
+    const { title } = req.query;
+
+    const news = await searchByTitleService(title);
+
+    if (news.length === 0) {
+      return res
+        .status(400)
+        .send({ message: "There are on news with this title " });
+    }
+
+    return res.send({
+      results: news.map((item) => ({
+        id: item._id,
+        title: item.title,
+        text: item.text,
+        banner: item.banner,
+        likes: item.likes,
+        comments: item.comments,
+        name: item.user.name,
+        username: item.user.username,
+        userAvatar: item.user.avatar,
+      })),
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+export const byUser = async (req, res) => {
+  try {
+    const id = req.userId;
+    const news = await byUserService(id);
+
+    return res.send({
+      results: news.map((item) => ({
+        id: item._id,
+        title: item.title,
+        text: item.text,
+        banner: item.banner,
+        likes: item.likes,
+        comments: item.comments,
+        name: item.user.name,
+        username: item.user.username,
+        userAvatar: item.user.avatar,
+      })),
+    });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+export const update = async (req, res) => {
+  try {
+    const { title, text, banner } = req.body;
+    const { id } = req.params;
+
+    if (!title || !text || !banner) {
+      res.status(400).send({
+        message: "Submit all fields for registration",
+      });
+    }
+
+    const news = await findByIdService(id);
+
+    if (news.user._id != req.userId) {
+      return res.status(400).send({
+        message: "You didn't update this post",
+      });
+    }
+
+    await updateService(id, title, text, banner);
+
+    return res.send({ message: "Post succesfully updated" });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+export const erase = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const news = await findByIdService(id);
+
+    if (news.user._id != req.userId) {
+      return res.status(400).send({
+        message: "You didn't update this post",
+      });
+    }
+
+    await eraseService(id);
+    return res.send({ message: "Post deleted successfully" });
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+export const likeNews = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+
+    const newsLiked = likeNewsService(id, userId);
+    if (!newsLiked) {
+      await deleteLikeNewsService(id, userId);
+      return res.status(200).send({ message: "Like successfully removed" });
+    }
+
+    res.send("OK");
+  } catch (err) {
+    res.status(500).send({ message: err.message });
+  }
+};
+
+export const addComment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+    const comment = req.body;
+
+    if (!comment) {
+      return res.status(400).send({ message: "Write a message to comment" });
+    }
+
+    await addCommentService(id, comment, userId);
+
+    res.send({ message: "Comment successfully completed" });
   } catch (err) {
     res.status(500).send({ message: err.message });
   }
