@@ -41,7 +41,7 @@ export const deleteLikeNewsService = (idNews, userId) =>
   News.findByIdAndUpdate({ _id: idNews }, { $pull: { likes: { userId } } });
 
 export const addCommentService = (idNews, comment, userId) => {
-  let idComment = Math.floor(Date.now() * Math.random()).toString(36);
+  const idComment = Math.floor(Date.now() * Math.random()).toString(36);
 
   return News.findOneAndUpdate(
     { id: idNews },
@@ -52,5 +52,13 @@ export const addCommentService = (idNews, comment, userId) => {
     }
   );
 };
+
+export const deleCommentService = (idNews, userId, idComment) =>
+  News.findByIdAndUpdate(
+    News.findByIdAndUpdate(
+      { _id: idNews },
+      { $pull: { comments: { idComment, userId } } }
+    )
+  );
 
 //export { createService, findAllService, topNewsService, countNews };

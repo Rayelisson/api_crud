@@ -11,6 +11,7 @@ import {
   likeNewsService,
   deleteLikeNewsService,
   addCommentService,
+  deleCommentService,
 } from "../services/news.service.js";
 
 export const create = async (req, res) => {
@@ -274,6 +275,26 @@ export const addComment = async (req, res) => {
     res.send({ message: "Comment successfully completed" });
   } catch (err) {
     res.status(500).send({ message: err.message });
+  }
+};
+
+export const deleteComment = async (req, res) => {
+  try {
+    const { idNews, idComment } = req.params;
+    const userId = req.userId;
+
+    const commentDeleted = await deleCommentService(idNews, userId, idComment);
+
+    const commentFinder = commentDeleted.comments.find(
+      (comment) => comment.idComment === idComment
+    );
+    if (commentFinder.userId !== userId) {
+      return res.status(400).send({ message: "You can't delete this comment" });
+    }
+
+    return res.send({ message: "Comment successfully removed" });
+  } catch (err) {
+    return res.status(500).send({ message: err.message });
   }
 };
 
